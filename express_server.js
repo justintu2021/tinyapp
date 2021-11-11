@@ -2,8 +2,12 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
+
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
+
+const morgan = require('morgan');
+app.use(morgan('dev'));
 
 const bodyParser = require("body-parser");
 const { urlencoded } = require("body-parser");
@@ -103,4 +107,8 @@ app.post('/login', (req,res) =>{
 app.post('/logout',(req, res) => {
   res.clearCookie("username")
   res.redirect("/urls")
+})
+
+app.get('/register', (req,res) => {
+  res.render('registration')
 })
