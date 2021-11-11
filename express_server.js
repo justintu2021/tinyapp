@@ -99,3 +99,8 @@ app.post('/login', (req,res) =>{
   console.log(username)
   res.redirect("/urls")
 })
+
+app.post('/logout',(req, res) => {
+  res.clearCookie("username")
+  res.redirect("/urls")
+})
