@@ -12,6 +12,8 @@ app.use(morgan('dev'));
 const bodyParser = require("body-parser");
 const { urlencoded } = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
+
+const bcrypt = require('bcryptjs');
 //////////////////// helper functions//////////////////////////////////////////////////////////////////
 
 function generateRandomString() {
@@ -207,7 +209,7 @@ app.post('/login', (req,res) =>{
   const user = gerUserByEmail(req.body.email)
   
   if(user) {
-    if (req.body.password === user.password) {
+    if (bcrypt.compareSync(req.body.password, user.password)) {
       res.cookie("user_id",user.id);
       res.redirect('/urls')
     } else {
@@ -237,19 +239,20 @@ app.get('/login', (req,res) => {
 app.post('/register', (req,res) => {
   const { email, password, statusCode } = req.body;
   if(email === "" || password === "") {
-    return res.send(`invalid email or password, statusCode 400`)
+    return res.send(`invalid email or password, statusCode: ${statusCode}`)
   };
   for (let i in users) {
     if (email === users[i]["email"])  {
-    return res.send(`email existed, statusCode 400`)
+    return res.send(`email existed, statusCode: ${statusCode}`)
     }
   };
 
+  const hashedPassword = bcrypt.hashSync(password, 10);
   const user_id = generateRandomString();
   users[user_id] =  {
     id : user_id, 
     email, 
-    password }
+    password: hashedPassword }
   
   res.cookie("user_id",user_id)
   console.log(users)
