@@ -12,7 +12,7 @@ app.use(morgan('dev'));
 const bodyParser = require("body-parser");
 const { urlencoded } = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
-////////////////////////////////////////////////////////////
+//////////////////// helper functions////////////////////////////////////////
 
 function generateRandomString() {
     let result           = '';
@@ -25,32 +25,37 @@ function generateRandomString() {
    return result;
   }
 
+  const urlDatabase = {
+    b6UTxQ: {
+        longURL: "https://www.tsn.ca",
+        userID: "aJ48lW"
+    },
+    i3BoGr: {
+        longURL: "https://www.google.ca",
+        userID: "aJ48lW"
+    }
+};const gerUserByEmail = (email) => {
+    for (key in users) {
+      if (users[key].email === email) {
+        return users[key]
+      }
+    }
+    return null;
+  }
 
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
+  
+
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
 
 const  users = {};
+///////////////////////helper functions//////////////////////////////////////////////////
 
-/////////////////////////////////////////////////////////////////////////
-const gerUserByEmail = (email) => {
-  for (key in users) {
-    if (users[key].email === email) {
-      return users[key]
-    }
-  }
-  return null;
-}
-
-
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
+// app.get("/", (req, res) => {
+//   res.send("Hello!");
+// });
 
 // app.get("/urls.json", (req, res) => {
 //   res.json(urlDatabase);
@@ -59,6 +64,11 @@ app.listen(PORT, () => {
 // app.get("/hello", (req, res) => {
 //   res.send("<html><body>Hello <b>World</b></body></html>\n");
 // });
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
+
 
 app.get("/urls", (req, res) => {
   const templateVars = { 
@@ -77,38 +87,36 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-
+  
   const templateVars = { 
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[this.shortURL],
     user: users[req.cookies.user_id]
     };
   res.render("urls_show", templateVars);
 });
 
-
 app.post("/urls", (req, res) => {
-  const randomURL = generateRandomString() //// randomURL = shortURL
-  urlDatabase[randomURL] = req.body["longURL"] /// add new shortURL & long URL to database
-  const longURL = urlDatabase[randomURL]
+  const shortURL = generateRandomString() //// randomURL = shortURL
+  urlDatabase[shortURL] = req.body["longURL"] /// add new shortURL & long URL to urldatabase
+  const longURL = urlDatabase[shortURL] /// add longURL to templateVars
 
   const templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    shortURL,
+    longURL,
     user: users[req.cookies.user_id]
    };
+
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:id", (req,res) => {
   const shortURL = req.params.id
   const longURL = urlDatabase[shortURL]
-  // console.log(shortURL)
   res.redirect(longURL)
 })
 
 app.post("/urls/:shortURL/delete",(req, res) => { 
-  // console.log(req.params)
   const shortURL = req.params.shortURL
   delete urlDatabase[shortURL]
   res.redirect("/urls")
@@ -118,8 +126,6 @@ app.post("/urls/:shortURL", (req,res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
-  // console.log(urlDatabase[shortURL])
-  // console.log(urlDatabase)
   res.redirect("/urls")
 })
 
