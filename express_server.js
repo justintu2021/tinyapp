@@ -3,8 +3,6 @@ const app = express();
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 
-// const cookieParser = require("cookie-parser");
-// app.use(cookieParser());
 const cookieSession = require('cookie-session')
 app.use(cookieSession({
   name: 'session',
@@ -19,28 +17,10 @@ const { urlencoded } = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 const bcrypt = require('bcryptjs');
-//////////////////// helper functions//////////////////////////////////////////////////////////////////
 
-function generateRandomString() {
-    let result           = '';
-    const characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = 6;
-    for ( let i = 0; i < 6; i++ ) {
-      result += characters.charAt(Math.floor(Math.random() * 
- charactersLength));
-   }
-   return result;
-  }
-  
-const gerUserByEmail = (email) => {
-    for (key in users) {
-      if (users[key].email === email) {
-        return users[key]
-      }
-    }
-    return null;
-  }
+const { gerUserByEmail, generateRandomString } = require('./helpers')
 
+/// function to make sure users can only access their own URL
 const urlsForUser = (id) => {
   const urlList= {}
     for (let i in urlDatabase) {
@@ -50,27 +30,8 @@ const urlsForUser = (id) => {
     }
     return urlList
   }
-///////////////////////helper functions///////////////////////////////////////////////////////////////////
 
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
-
-
-
-// app.get("/", (req, res) => {
-//   res.send("Hello!");
-// });
-
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
-
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
-const  users = {};
+const  users = {}; /// users database from scratch
 
 const urlDatabase = {
   b6UTxQ: {
@@ -89,9 +50,8 @@ app.listen(PORT, () => {
 
 
 app.get("/urls", (req, res) => {
-
-  if (req.session.user_id) {
-    let finalList = urlsForUser(req.session.user_id);
+  if (req.session.user_id) { //// check if user logged in 
+    let finalList = urlsForUser(req.session.user_id); /// list of URL a specific user can access
     const templateVars = { 
       urls: finalList, 
       user: users[req.session.user_id], 
@@ -104,7 +64,7 @@ app.get("/urls", (req, res) => {
   
 
 app.get("/urls/new", (req, res) => {
-  if (req.session.user_id) {
+  if (req.session.user_id) { /// req.session.user_id = userID
     const templateVars = {
       urls: urlDatabase,
       user: users[req.session.user_id]
@@ -165,12 +125,13 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/u/:id", (req,res) => {
+  /// check if a URL or ID is valid ?
   if (urlDatabase.hasOwnProperty(req.params.id)) {
     if (req.session.user_id) {
       const shortURL = req.params.id
       const longURL = urlDatabase[shortURL]["longURL"]
       
-      res.redirect(longURL)
+      res.redirect(`http://${longURL}`)
     } else {
       res.render('request_login')
     }
@@ -211,10 +172,10 @@ app.get ('/login',(req,res) => {
 }) 
 
 app.post('/login', (req,res) =>{
-  const user = gerUserByEmail(req.body.email)
+  const user = gerUserByEmail(req.body.email,users)
   
   if(user) {
-    if (bcrypt.compareSync(req.body.password, user.password)) {
+    if (bcrypt.compareSync(req.body.password, user["password"])) {
       req.session.user_id = user.id;
       res.redirect('/urls')
     } else {
@@ -254,13 +215,13 @@ app.post('/register', (req,res) => {
 
   const hashedPassword = bcrypt.hashSync(password, 10);
   const user_id = generateRandomString();
+
   users[user_id] =  {
     id : user_id, 
     email, 
-    password: hashedPassword }
+    password: hashedPassword };
   
-  req.session.user_id = user_id
-  
+  req.session.user_id = user_id // set cookies
   res.redirect("/urls")
 })
 
