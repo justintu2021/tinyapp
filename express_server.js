@@ -76,7 +76,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  if (req.session.user_id) {
+  
     /// in case shortURL or ID is valid
     for (let j in urlDatabase) {
       if(req.params.shortURL === j) {
@@ -88,7 +88,7 @@ app.get("/urls/:shortURL", (req, res) => {
           longURL,
           user: users[req.session.user_id]
         };
-        res.render("urls_show", templateVars);
+        res.redirect(`http://${longURL}`);
       } 
     }
     //// in case shortURL or ID is invalid
@@ -96,9 +96,7 @@ app.get("/urls/:shortURL", (req, res) => {
       user: users[req.session.user_id]
     };
     res.render("wrongID",templateVars)
-  } else {
-      res.render('request_login')
-  }
+   
 });
 
 app.post("/urls", (req, res) => {
@@ -127,18 +125,14 @@ app.post("/urls", (req, res) => {
 app.get("/u/:id", (req,res) => {
   /// check if a URL or ID is valid ?
   if (urlDatabase.hasOwnProperty(req.params.id)) {
-    if (req.session.user_id) {
       const shortURL = req.params.id
       const longURL = urlDatabase[shortURL]["longURL"]
-      
       res.redirect(`http://${longURL}`)
-    } else {
-      res.render('request_login')
-    }
   } else {
     res.render('wrongID')
   }
 })
+
 
 app.post("/urls/:shortURL/delete",(req, res) => { 
   if (req.session.user_id) {
