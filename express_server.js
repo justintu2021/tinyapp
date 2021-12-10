@@ -31,8 +31,6 @@ const urlsForUser = (id) => {
     return urlList
   }
 
-const  users = {}; /// users database from scratch
-
 const urlDatabase = {
   b6UTxQ: {
       longURL: "https://www.tsn.ca",
@@ -48,6 +46,8 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+app.get("/", (req, res) => {
+  res.redirect("/urls");})
 
 app.get("/urls", (req, res) => {
   if (req.session.user_id) { //// check if user logged in 
@@ -76,7 +76,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  
+  if (req.session.user_id) {
     /// in case shortURL or ID is valid
     for (let j in urlDatabase) {
       if(req.params.shortURL === j) {
@@ -88,7 +88,7 @@ app.get("/urls/:shortURL", (req, res) => {
           longURL,
           user: users[req.session.user_id]
         };
-        res.redirect(`http://${longURL}`);
+        res.render("urls_show", templateVars);
       } 
     }
     //// in case shortURL or ID is invalid
@@ -96,7 +96,9 @@ app.get("/urls/:shortURL", (req, res) => {
       user: users[req.session.user_id]
     };
     res.render("wrongID",templateVars)
-   
+  } else {
+      res.render('request_login')
+  }
 });
 
 app.post("/urls", (req, res) => {
@@ -124,15 +126,17 @@ app.post("/urls", (req, res) => {
 
 app.get("/u/:id", (req,res) => {
   /// check if a URL or ID is valid ?
-  if (urlDatabase.hasOwnProperty(req.params.id)) {
+  if (urlDatabase[req.params.id]) {
+    
       const shortURL = req.params.id
       const longURL = urlDatabase[shortURL]["longURL"]
+      
       res.redirect(`http://${longURL}`)
+   
   } else {
-    res.render('wrongID')
+    res.send(`<h3> URL not existed</h3>`)
   }
 })
-
 
 app.post("/urls/:shortURL/delete",(req, res) => { 
   if (req.session.user_id) {
@@ -169,6 +173,7 @@ app.post('/login', (req,res) =>{
   const user = gerUserByEmail(req.body.email,users)
   
   if(user) {
+    console.log(user)
     if (bcrypt.compareSync(req.body.password, user["password"])) {
       req.session.user_id = user.id;
       res.redirect('/urls')
@@ -195,7 +200,11 @@ app.get('/login', (req,res) => {
   res.render('login')
 })
 
+// || CREATE USERS DATABASE WITH ZERO DATA || 
+const  users = {}; 
 
+
+// || REGISTER || 
 app.post('/register', (req,res) => {
   const { email, password, statusCode } = req.body;
   if(email === "" || password === "") {
@@ -218,8 +227,3 @@ app.post('/register', (req,res) => {
   req.session.user_id = user_id // set cookies
   res.redirect("/urls")
 })
-
-
-
-
-

@@ -5,7 +5,7 @@ const generateRandomString= function() {
 const gerUserByEmail = (email,database) => {
     for (key in database) {
       if (database[key].email === email) {
-        return key
+        return database[key]
       }
     }
     return null;
